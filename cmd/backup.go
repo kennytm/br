@@ -328,8 +328,8 @@ func newRawBackupCommand() *cobra.Command {
 			return runBackup(command.Flags(), "Raw Backup", bc)
 		},
 	}
-	command.Flags().StringP("format", "", "raw", "raw key format")
-	command.Flags().StringP("cf", "", "default", "backup raw kv cf")
+	command.Flags().StringP("format", "", "hex", "start/end key format, support raw|escaped|hex")
+	command.Flags().StringP("cf", "", "default", "backup specify cf, correspond to tikv cf")
 	command.Flags().StringP("start", "", "", "backup raw kv start key")
 	command.Flags().StringP("end", "", "", "backup raw kv end key")
 	return command
