@@ -189,6 +189,9 @@ func (c *pdClient) SplitRegion(ctx context.Context, regionInfo *RegionInfo, key 
 func (c *pdClient) BatchSplitRegions(
 	ctx context.Context, regionInfo *RegionInfo, keys [][]byte,
 ) ([]*RegionInfo, error) {
+	beforeSize, _ := c.approximateSize(ctx, regionInfo.Region.Id)
+	fmt.Printf("BEFORE SPLITTING %d, size ~ %d MB\n", regionInfo.Region.Id, beforeSize)
+
 	var peer *metapb.Peer
 	if regionInfo.Leader != nil {
 		peer = regionInfo.Leader
@@ -232,6 +235,9 @@ func (c *pdClient) BatchSplitRegions(
 	regions := resp.GetRegions()
 	newRegionInfos := make([]*RegionInfo, 0, len(regions))
 	for _, region := range regions {
+		afterSize, _ := c.approximateSize(ctx, region.Id)
+		fmt.Printf(" AFTER SPLITTING %d, size ~ %d MB\n", region.Id, afterSize)
+
 		// Skip the original region
 		if region.GetId() == regionInfo.Region.GetId() {
 			continue
@@ -351,6 +357,31 @@ func (c *pdClient) SetStoresLabel(
 		}
 	}
 	return nil
+}
+
+func (c *pdClient) approximateSize(ctx context.Context, regionID uint64) (uint64, error) {
+	var rule struct {
+		Size uint64 `json:"approximate_size"`
+	}
+	addr := c.getPDAPIAddr()
+	if addr == "" {
+		return 0, errors.New("failed to get approximate size")
+	}
+	req, _ := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("%s/pd/api/v1/region/id/%d", addr, regionID), nil)
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return 0, errors.WithStack(err)
+	}
+	b, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return 0, errors.WithStack(err)
+	}
+	res.Body.Close()
+	err = json.Unmarshal(b, &rule)
+	if err != nil {
+		return 0, errors.WithStack(err)
+	}
+	return rule.Size, nil
 }
 
 func (c *pdClient) getPDAPIAddr() string {
