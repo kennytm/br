@@ -73,7 +73,10 @@ func (ic *importClient) DownloadSST(
 	if err != nil {
 		return nil, err
 	}
-	return client.Download(ctx, req)
+	log.Warn("74e709e9-9d22-44d3-8d80-f6b385194092 BEFORE DOWNLOAD", zap.Uint64("storeID", storeID), zap.Reflect("client", client), zap.Reflect("req", req))
+	resp, err := client.Download(ctx, req)
+	log.Warn("74e709e9-9d22-44d3-8d80-f6b385194092 AFTER DOWNLOAD", zap.Uint64("storeID", storeID), zap.Reflect("client", client), zap.Reflect("req", req), zap.Reflect("resp", resp), zap.Error(err))
+	return resp, err
 }
 
 func (ic *importClient) SetDownloadSpeedLimit(
