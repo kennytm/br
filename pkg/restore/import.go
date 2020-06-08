@@ -473,7 +473,7 @@ func (importer *FileImporter) ingestSST(
 	log.Debug("ingest SST", zap.Stringer("sstMeta", sstMeta), zap.Reflect("leader", leader))
 	resp, err := importer.importClient.IngestSST(importer.ctx, leader.GetStoreId(), req)
 	if err != nil {
-		return nil, errors.Trace(err)
+		return nil, errors.Annotatef(ErrGRPC, "%s", err)
 	}
 	return resp, nil
 }
